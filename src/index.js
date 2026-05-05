@@ -82,11 +82,13 @@ async function listVersions() {
 }
 
 // --- Tool: getManPage ---
+const DEFAULT_CHUNK = 30000;
+
 server.registerTool(
   "getManPage",
   {
     description:
-      "Get the full content of a RHEL man page for a specific version. Use this to verify configuration parameter defaults, syntax, and behavior.",
+      "Get the content of a RHEL man page for a specific version. Use this to verify configuration parameter defaults, syntax, and behavior. Large pages are paginated — call repeatedly with `offset` to read subsequent chunks.",
     inputSchema: {
       page: z
         .string()
@@ -103,13 +105,27 @@ server.registerTool(
         .optional()
         .default("9")
         .describe('RHEL major version (default: "9"). Available: "8", "9", "10".'),
+      offset: z
+        .number()
+        .int()
+        .nonnegative()
+        .optional()
+        .default(0)
+        .describe(`Byte offset into the rendered manpage. Default 0. Use the value from the previous call's "[truncated]" footer to fetch the next chunk.`),
+      limit: z
+        .number()
+        .int()
+        .positive()
+        .optional()
+        .default(DEFAULT_CHUNK)
+        .describe(`Maximum characters to return in this call. Default ${DEFAULT_CHUNK} keeps responses under typical MCP tool-result token caps.`),
     },
     annotations: {
       readOnlyHint: true,
       openWorldHint: true,
     },
   },
-  async ({ page, section, rhelVersion }) => {
+  async ({ page, section, rhelVersion, offset, limit }) => {
     const content = await loadManPage(rhelVersion, page, section);
     if (!content) {
       // Try to find the page in other sections
@@ -135,11 +151,22 @@ server.registerTool(
         ],
       };
     }
+
+    const total = content.length;
+    const start = Math.min(offset, total);
+    const end = Math.min(start + limit, total);
+    const slice = content.slice(start, end);
+    const header = `# ${page}(${section}) — RHEL ${rhelVersion}\n# chars ${start}-${end} of ${total}\n\n`;
+    const footer =
+      end < total
+        ? `\n\n[truncated: showing chars ${start}-${end} of ${total}. Call again with offset=${end} for the next chunk.]`
+        : "";
+
     return {
       content: [
         {
           type: "text",
-          text: `# ${page}(${section}) — RHEL ${rhelVersion}\n\n${content}`,
+          text: `${header}${slice}${footer}`,
         },
       ],
     };
