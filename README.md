@@ -6,10 +6,20 @@ An [MCP](https://modelcontextprotocol.io/) server for RHEL man pages. Lets AI as
 
 | Tool | Description |
 |------|-------------|
-| `getManPage` | Get the full content of a man page for a specific RHEL version |
+| `getManPage` | Get the content of a man page for a specific RHEL version (paginated) |
 | `searchManPages` | Search across all man pages for a keyword or regex pattern, with context lines |
 | `compareVersions` | Compare a man page between two RHEL versions to detect parameter changes |
 | `listManPages` | List available man pages, optionally filtered by name pattern |
+
+## Pagination
+
+`getManPage` accepts optional `offset` (default 0) and `limit` (default 30000) parameters to chunk large man pages — many RHEL config files (e.g. `sssd.conf(5)`, `nm-settings-dbus(5)`) exceed typical MCP tool-result token caps when returned whole. When a response is truncated, the output ends with a footer like:
+
+```
+[truncated: showing chars 0-30000 of 102783. Call again with offset=30000 for the next chunk.]
+```
+
+Pass that `offset` back to fetch the next chunk. Small pages return in one call.
 
 ## Prerequisites
 
