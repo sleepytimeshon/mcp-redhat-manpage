@@ -40,6 +40,14 @@ jobs:
       - name: Check package contents
         run: npm pack --dry-run
 
+      # npm publish rewrites or drops package.json fields it considers invalid (npm 11
+      # removes "./"-prefixed bin paths), so fail here instead of shipping a broken package
+      - name: Check package.json needs no npm fixes
+        if: matrix.node-version == '24'
+        run: |
+          npm pkg fix
+          git diff --exit-code -- package.json
+
   publish:
     name: Publish to npm
     needs: test
@@ -62,6 +70,11 @@ jobs:
       # Trusted publishing needs npm 11.5.1 or later
       - name: Upgrade npm
         run: npm install -g npm@11
+
+      - name: Check package.json needs no npm fixes
+        run: |
+          npm pkg fix
+          git diff --exit-code -- package.json
 
       - name: Check whether this version is on npm
         id: version
