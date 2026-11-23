@@ -23,13 +23,20 @@ Pass that `offset` back to fetch the next chunk. Small pages return in one call.
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 18.14.1+
 
 Man pages for RHEL 8, 9, and 10 are included via the [mcp-redhat-manpage-data](https://github.com/sleepytimeshon/mcp-redhat-manpage-data) dependency. No container runtime or manual extraction required.
 
 ## Configuration
 
 No authentication required. The server reads man pages bundled in the data package.
+
+### Pinning a version
+
+The examples below run `npx -y mcp-redhat-manpage`, which fetches the latest published release each time the server starts. For operational use, pin a version so upgrades happen deliberately:
+
+- Replace `mcp-redhat-manpage` in `args` with `mcp-redhat-manpage@<version>` (e.g. `mcp-redhat-manpage@0.2.3`), or
+- Install it once with `npm install -g mcp-redhat-manpage@<version>` and use `mcp-redhat-manpage` as the `command` with no `args`.
 
 ### Gemini CLI
 
@@ -58,7 +65,15 @@ orchestrate toolkits import --kind mcp \
 
 ### Claude Code
 
-Add to `~/.claude/settings.json`:
+Claude Code reads MCP servers from `~/.claude.json` (user and local scopes) or a project's `.mcp.json`, not from `settings.json`.
+
+To make the server available in every project, add it at user scope:
+
+```bash
+claude mcp add redhat-manpage --scope user -- npx -y mcp-redhat-manpage
+```
+
+To share it with a project instead, add it to the project's `.mcp.json`:
 
 ```json
 {
@@ -71,15 +86,32 @@ Add to `~/.claude/settings.json`:
 }
 ```
 
-### VS Code / Cursor
+Run `claude mcp list` to confirm the server connects.
+
+### VS Code
 
 Add to `.vscode/mcp.json` in your workspace:
 
 ```json
 {
-  "mcpServers": {
+  "servers": {
     "redhat-manpage": {
       "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "mcp-redhat-manpage"]
+    }
+  }
+}
+```
+
+### Cursor
+
+Add to `.cursor/mcp.json` in your workspace, or `~/.cursor/mcp.json` for all workspaces:
+
+```json
+{
+  "mcpServers": {
+    "redhat-manpage": {
       "command": "npx",
       "args": ["-y", "mcp-redhat-manpage"]
     }
