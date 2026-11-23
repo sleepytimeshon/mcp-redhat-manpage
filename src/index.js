@@ -13,7 +13,7 @@ const reader = createReader(process.env.MANPAGES_DIR || undefined);
 
 const server = new McpServer({
   name: "mcp-redhat-manpage",
-  version: "0.2.5",
+  version: "0.2.6",
 });
 
 // Cache loaded man pages in memory for fast repeated lookups

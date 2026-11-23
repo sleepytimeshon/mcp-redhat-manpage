@@ -4,6 +4,11 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.2.6] - 2026-11-23
+
+### Security
+- Upgrade `@modelcontextprotocol/sdk` to 1.32.2 and `zod` to 4.6.7, and refresh the lockfile, clearing every `npm audit` advisory (1 critical, 7 high, 3 moderate) in the SDK, zod, and their transitive dependencies (hono, @hono/node-server, body-parser, express-rate-limit, fast-uri, ip-address, path-to-regexp, proxy-addr, qs).
+
 ## [0.2.5] - 2026-11-23
 
 ### Added
@@ -65,7 +70,8 @@ All notable changes to this project are documented in this file. The format is b
 ### Added
 - First release: an MCP server for version-indexed RHEL 8, 9, and 10 man pages with `getManPage`, `searchManPages`, `listManPages`, and `compareVersions`.
 
-[Unreleased]: https://github.com/sleepytimeshon/mcp-redhat-manpage/compare/v0.2.5...HEAD
+[Unreleased]: https://github.com/sleepytimeshon/mcp-redhat-manpage/compare/v0.2.6...HEAD
+[0.2.6]: https://www.npmjs.com/package/mcp-redhat-manpage/v/0.2.6
 [0.2.5]: https://www.npmjs.com/package/mcp-redhat-manpage/v/0.2.5
 [0.2.4]: https://www.npmjs.com/package/mcp-redhat-manpage/v/0.2.4
 [0.2.3]: https://www.npmjs.com/package/mcp-redhat-manpage/v/0.2.3
