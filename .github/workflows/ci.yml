@@ -1,0 +1,93 @@
+---
+name: CI
+
+"on":
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Lowest supported major (engines.node) through current
+        node-version: ['18', '20', '22', '24']
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check JavaScript syntax
+        run: find src test -name '*.js' -o -name '*.mjs' | xargs -n 1 node --check
+
+      - name: Run smoke test
+        run: npm test
+
+      - name: Check package contents
+        run: npm pack --dry-run
+
+  publish:
+    name: Publish to npm
+    needs: test
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # create the vX.Y.Z release
+      id-token: write  # npm trusted publishing and provenance
+    concurrency:
+      group: npm-publish
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          registry-url: 'https://registry.npmjs.org'
+
+      # Trusted publishing needs npm 11.5.1 or later
+      - name: Upgrade npm
+        run: npm install -g npm@11
+
+      - name: Check whether this version is on npm
+        id: version
+        run: |
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if [ -n "$(npm view "$name@$version" version 2>/dev/null)" ]; then
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::$name@$version is already on npm; bump the version in package.json and src/index.js to release"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish
+        if: steps.version.outputs.publish == 'true'
+        run: npm publish --provenance --access public
+
+      - name: Create release
+        if: steps.version.outputs.publish == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ steps.version.outputs.version }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::notice::Release $TAG already exists"
+          else
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "$TAG" --generate-notes
+          fi

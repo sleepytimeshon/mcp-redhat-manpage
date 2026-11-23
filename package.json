@@ -10,8 +10,12 @@
   "engines": {
     "node": ">=18.14.1"
   },
+  "files": [
+    "src"
+  ],
   "scripts": {
-    "start": "node src/index.js"
+    "start": "node src/index.js",
+    "test": "node test/smoke.mjs"
   },
   "keywords": [
     "mcp",

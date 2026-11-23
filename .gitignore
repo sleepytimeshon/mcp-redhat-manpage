@@ -1,2 +1,11 @@
+# Dependencies are installed from package-lock.json with npm ci, never committed
 node_modules/
-manpages/
+
+# Release tarballs from npm pack are published to npm, not committed
+*.tgz
+
+# npm debug logs
+npm-debug.log*
+
+# Locally extracted man pages; released builds read them from mcp-redhat-manpage-data
+/manpages/

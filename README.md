@@ -121,6 +121,12 @@ Add to `.cursor/mcp.json` in your workspace, or `~/.cursor/mcp.json` for all wor
 
 To override the bundled man pages with a custom directory, set the `MANPAGES_DIR` environment variable.
 
+## Releasing
+
+Every push to `main` runs CI (`.github/workflows/ci.yml`): `npm ci`, a syntax check, and `npm test` on Node 18, 20, 22, and 24. `npm test` starts the server and checks that its tools match the tables in [Tools](#tools) and that it reports the `package.json` version.
+
+To release, bump `version` in both `package.json` and the `McpServer` declaration in `src/index.js`, then push to `main`. When that version is not yet on npm, CI publishes it with provenance through npm trusted publishing and creates a `vX.Y.Z` GitHub release. Pushes that keep the version only run the tests.
+
 ## Related MCP Servers
 
 - [mcp-redhat-account](https://github.com/sleepytimeshon/mcp-redhat-account) - Account management
