@@ -11,7 +11,8 @@
     "node": ">=18.14.1"
   },
   "files": [
-    "src"
+    "src",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "start": "node src/index.js",
