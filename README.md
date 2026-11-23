@@ -25,7 +25,7 @@ Pass that `offset` back to fetch the next chunk. Small pages return in one call.
 
 - Node.js 18.14.1+
 
-Man pages for RHEL 8, 9, and 10 are included via the [mcp-redhat-manpage-data](https://github.com/sleepytimeshon/mcp-redhat-manpage-data) dependency. No container runtime or manual extraction required.
+Man pages for RHEL 8, 9, and 10 are included via the [mcp-redhat-manpage-data](https://github.com/sleepytimeshon/mcp-redhat-manpage-data) dependency: sections 1 (user commands), 5 (file formats and configuration files), 7 (conventions and overviews), and 8 (administration commands) from every RHEL BaseOS and AppStream package that ships them. No container runtime or manual extraction required.
 
 ## Configuration
 
@@ -119,7 +119,7 @@ Add to `.cursor/mcp.json` in your workspace, or `~/.cursor/mcp.json` for all wor
 }
 ```
 
-To override the bundled man pages with a custom directory, set the `MANPAGES_DIR` environment variable.
+To override the bundled man pages with a custom directory, set the `MANPAGES_DIR` environment variable. It must contain one `rhel<N>` directory per version with pages named `<page>.<section>.txt` or `<page>.<section>.txt.gz` (or the `pages.gz` and `index.tsv` archive of `mcp-redhat-manpage-data`), and optionally an `aliases.tsv` mapping `page` to `target` for pages with identical content.
 
 ## Releasing
 

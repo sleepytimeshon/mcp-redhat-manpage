@@ -3,82 +3,29 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { z } from "zod";
-import { readdir, readFile } from "node:fs/promises";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-import { existsSync } from "node:fs";
 import { createRequire } from "node:module";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
 const require = createRequire(import.meta.url);
+const { createReader } = require("mcp-redhat-manpage-data");
 
-// Resolve man pages directory: env override > data package > local fallback
-function resolveManpagesDir() {
-  if (process.env.MANPAGES_DIR) return process.env.MANPAGES_DIR;
-  try {
-    const { manpagesDir } = require("mcp-redhat-manpage-data");
-    return manpagesDir;
-  } catch {
-    return join(dirname(__dirname), "manpages");
-  }
-}
-
-const MANPAGES_DIR = resolveManpagesDir();
+// Read the bundled man pages, or a directory with the same layout from MANPAGES_DIR
+const reader = createReader(process.env.MANPAGES_DIR || undefined);
 
 const server = new McpServer({
   name: "mcp-redhat-manpage",
-  version: "0.2.4",
+  version: "0.2.5",
 });
 
 // Cache loaded man pages in memory for fast repeated lookups
 const cache = new Map();
 
-async function getVersionDir(rhelVersion) {
-  const dir = join(MANPAGES_DIR, `rhel${rhelVersion}`);
-  if (!existsSync(dir)) {
-    throw new Error(
-      `No man pages found for RHEL ${rhelVersion}. Run 'npm run extract' or 'bash scripts/extract.sh ${rhelVersion}' first.`
-    );
-  }
-  return dir;
-}
-
 async function loadManPage(rhelVersion, pageName, section) {
   const key = `${rhelVersion}:${pageName}.${section}`;
   if (cache.has(key)) return cache.get(key);
 
-  const dir = await getVersionDir(rhelVersion);
-  const file = join(dir, `${pageName}.${section}.txt`);
-
-  if (!existsSync(file)) return null;
-
-  const content = await readFile(file, "utf-8");
-  cache.set(key, content);
+  const content = await reader.readPage(rhelVersion, pageName, section);
+  if (content !== null) cache.set(key, content);
   return content;
-}
-
-async function listAvailablePages(rhelVersion) {
-  const dir = await getVersionDir(rhelVersion);
-  const files = await readdir(dir);
-  return files
-    .filter((f) => f.endsWith(".txt"))
-    .map((f) => {
-      const base = f.replace(".txt", "");
-      const parts = base.split(".");
-      const section = parts.pop();
-      const name = parts.join(".");
-      return { name, section };
-    })
-    .sort((a, b) => a.name.localeCompare(b.name) || a.section.localeCompare(b.section));
-}
-
-async function listVersions() {
-  if (!existsSync(MANPAGES_DIR)) return [];
-  const dirs = await readdir(MANPAGES_DIR);
-  return dirs
-    .filter((d) => d.startsWith("rhel"))
-    .map((d) => d.replace("rhel", ""))
-    .sort();
 }
 
 // --- Tool: getManPage ---
@@ -129,7 +76,7 @@ server.registerTool(
     const content = await loadManPage(rhelVersion, page, section);
     if (!content) {
       // Try to find the page in other sections
-      const pages = await listAvailablePages(rhelVersion);
+      const pages = await reader.listPages(rhelVersion);
       const matches = pages.filter((p) => p.name === page || p.name.includes(page));
       if (matches.length > 0) {
         const suggestions = matches.map((m) => `${m.name}(${m.section})`).join(", ");
@@ -146,7 +93,7 @@ server.registerTool(
         content: [
           {
             type: "text",
-            text: `Man page "${page}(${section})" not found for RHEL ${rhelVersion}. Run 'npm run extract' to refresh man pages.`,
+            text: `Man page "${page}(${section})" not found for RHEL ${rhelVersion}.`,
           },
         ],
       };
@@ -203,18 +150,16 @@ server.registerTool(
     },
   },
   async ({ query, rhelVersion, maxResults, contextLines }) => {
-    const dir = await getVersionDir(rhelVersion);
-    const files = (await readdir(dir)).filter((f) => f.endsWith(".txt"));
-
+    // Each distinct page once; aliases share their stored page's content
     const results = [];
     const regex = new RegExp(query, "gi");
 
-    for (const file of files) {
+    for await (const stored of reader.storedPages(rhelVersion)) {
       if (results.length >= maxResults) break;
 
-      const content = await readFile(join(dir, file), "utf-8");
+      const content = await stored.read();
       const lines = content.split("\n");
-      const base = file.replace(".txt", "");
+      const base = `${stored.name}.${stored.section}`;
 
       for (let i = 0; i < lines.length; i++) {
         if (results.length >= maxResults) break;
@@ -371,7 +316,7 @@ server.registerTool(
     },
   },
   async ({ rhelVersion, filter }) => {
-    let pages = await listAvailablePages(rhelVersion);
+    let pages = await reader.listPages(rhelVersion);
 
     if (filter) {
       const pattern = new RegExp(filter, "i");
@@ -385,13 +330,13 @@ server.registerTool(
             type: "text",
             text: filter
               ? `No man pages matching "${filter}" for RHEL ${rhelVersion}.`
-              : `No man pages available for RHEL ${rhelVersion}. Run 'npm run extract' first.`,
+              : `No man pages available for RHEL ${rhelVersion}.`,
           },
         ],
       };
     }
 
-    const versions = await listVersions();
+    const versions = await reader.versions();
     const output = pages.map((p) => `${p.name}(${p.section})`).join("\n");
 
     return {

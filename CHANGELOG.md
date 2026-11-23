@@ -4,9 +4,18 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.2.5] - 2026-11-23
+
 ### Added
-- This changelog, included in the published package.
-- The MIT `LICENSE` file, included in the published package.
+- Man pages from every RHEL BaseOS and AppStream package that ships them in sections 1, 5, 7, or 8, through `mcp-redhat-manpage-data` 0.2.1: about 11,000 pages per RHEL version instead of about 3,000 from 24 packages.
+- A data test that exercises every tool against the installed man pages.
+- This changelog and the MIT `LICENSE` file, included in the published package.
+
+### Changed
+- Pages are read through the reader API of `mcp-redhat-manpage-data` instead of from its files, so the data package can change its storage (now one compressed archive per RHEL version, with identical pages stored once) without a server change. A custom `MANPAGES_DIR` with plain `.txt` pages still works.
+
+### Removed
+- Pages in sections 2, 3, and other library or API sections, which `mcp-redhat-manpage-data` 0.2.1 no longer ships.
 
 ## [0.2.4] - 2026-11-23
 
@@ -56,7 +65,8 @@ All notable changes to this project are documented in this file. The format is b
 ### Added
 - First release: an MCP server for version-indexed RHEL 8, 9, and 10 man pages with `getManPage`, `searchManPages`, `listManPages`, and `compareVersions`.
 
-[Unreleased]: https://github.com/sleepytimeshon/mcp-redhat-manpage/compare/v0.2.4...HEAD
+[Unreleased]: https://github.com/sleepytimeshon/mcp-redhat-manpage/compare/v0.2.5...HEAD
+[0.2.5]: https://www.npmjs.com/package/mcp-redhat-manpage/v/0.2.5
 [0.2.4]: https://www.npmjs.com/package/mcp-redhat-manpage/v/0.2.4
 [0.2.3]: https://www.npmjs.com/package/mcp-redhat-manpage/v/0.2.3
 [0.2.2]: https://www.npmjs.com/package/mcp-redhat-manpage/v/0.2.2
