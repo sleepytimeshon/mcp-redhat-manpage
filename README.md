@@ -18,6 +18,8 @@ Pages are named as `sssd.conf`, `sssd.conf(5)`, or with a separate `section`. Wi
 
 Output is Markdown written for a language model. `getManPageOption` reads a page's definition lists, so it finds options in config file pages (`sssd.conf(5)`, `sshd_config(5)`, `systemd.service(5)`) and flags in command pages (`ls(1)`), and reports a default only when the description states one. `compareVersions` compares paragraphs with line wrapping ignored, and lists definition-list entries whose description changed.
 
+`getManPage`, `getManPageOption`, and `compareVersions` name the RPM that ships each page and its license (e.g. `sssd-common-2.9.9-3.el9.x86_64`), so the version a page documents is known; a custom `MANPAGES_DIR` without a `sources.tsv` omits it.
+
 `searchManPages` and `getManPageOption` without a `page` read every page of the version, which takes about 10 seconds; pass `page`, `nameFilter`, or `section` to narrow them.
 
 ## Pagination

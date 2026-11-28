@@ -95,6 +95,18 @@ export class ManPages {
     return index;
   }
 
+  // The package that ships a page, as "package (license)", or null when the reader does not
+  // know it (an older data package, or a custom MANPAGES_DIR without sources.tsv)
+  async source(version, name, section) {
+    if (typeof this.reader.pageSource !== "function") return null;
+    try {
+      const src = await this.reader.pageSource(version, name, section);
+      return src?.package ? `${src.package}${src.license ? ` (license: ${src.license})` : ""}` : null;
+    } catch {
+      return null;
+    }
+  }
+
   // Read a page through a small LRU cache
   async read(version, name, section) {
     const key = `${version}:${name}.${section}`;
@@ -260,11 +272,12 @@ export function extractDefault(block) {
   return m ? m[1].trim().slice(0, 200) : undefined;
 }
 
-export function formatOptionEntries(name, section, version, entries) {
+export function formatOptionEntries(name, section, version, entries, source) {
+  const pkg = source ? `\n**Package:** ${source}` : "";
   return entries.map((e) => {
     const where = e.context ? ` in ${e.context}` : "";
     const def = e.default !== undefined ? `\n**Default:** ${e.default}` : "";
-    return `### ${ref(name, section)} RHEL ${version}, line ${e.line}${where}${def}\n\n\`\`\`\n${e.text}\n\`\`\``;
+    return `### ${ref(name, section)} RHEL ${version}, line ${e.line}${where}${def}${pkg}\n\n\`\`\`\n${e.text}\n\`\`\``;
   }).join("\n\n");
 }
 
@@ -379,10 +392,11 @@ export function comparePages(a, b) {
   };
 }
 
-export function formatComparison({ name, section, v1, v2, a, b }) {
+export function formatComparison({ name, section, v1, v2, a, b, src1, src2 }) {
   const d = comparePages(a, b);
   const lines = (t) => t.split("\n").length;
-  let out = `## ${ref(name, section)}: RHEL ${v1} vs RHEL ${v2}\n\n- RHEL ${v1}: ${lines(a)} lines\n- RHEL ${v2}: ${lines(b)} lines\n`;
+  const from = (src) => (src ? `, from ${src}` : "");
+  let out = `## ${ref(name, section)}: RHEL ${v1} vs RHEL ${v2}\n\n- RHEL ${v1}: ${lines(a)} lines${from(src1)}\n- RHEL ${v2}: ${lines(b)} lines${from(src2)}\n`;
   if (d.identical) return `${out}\nThe pages are identical.`;
   if (d.sameText) return `${out}\nThe text is the same; only line wrapping, spacing, or the title and footer lines differ.`;
   const list = (title, items) => (items.length ? `\n### ${title} (${items.length})\n${items.map((x) => `- \`${x}\``).join("\n")}\n` : "");

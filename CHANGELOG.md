@@ -4,6 +4,14 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-27
+
+### Added
+- `getManPage`, `getManPageOption`, and `compareVersions` name the package (NEVRA) and license that ship each page, through `pageSource` of `mcp-redhat-manpage-data` 0.2.2.
+
+### Changed
+- Require `mcp-redhat-manpage-data` 0.2.2, whose one-pass `storedPages` makes full-scan `searchManPages` and `getManPageOption` calls faster.
+
 ## [0.3.0] - 2026-11-27
 
 ### Added
@@ -97,7 +105,8 @@ All notable changes to this project are documented in this file. The format is b
 ### Added
 - First release: an MCP server for version-indexed RHEL 8, 9, and 10 man pages with `getManPage`, `searchManPages`, `listManPages`, and `compareVersions`.
 
-[Unreleased]: https://github.com/sleepytimeshon/mcp-redhat-manpage/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/sleepytimeshon/mcp-redhat-manpage/compare/v0.3.1...HEAD
+[0.3.1]: https://www.npmjs.com/package/mcp-redhat-manpage/v/0.3.1
 [0.3.0]: https://www.npmjs.com/package/mcp-redhat-manpage/v/0.3.0
 [0.2.6]: https://www.npmjs.com/package/mcp-redhat-manpage/v/0.2.6
 [0.2.5]: https://www.npmjs.com/package/mcp-redhat-manpage/v/0.2.5

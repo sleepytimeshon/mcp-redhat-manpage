@@ -30,7 +30,7 @@ const pages = new ManPages(createReader(process.env.MANPAGES_DIR || undefined));
 
 const server = new McpServer({
   name: "mcp-redhat-manpage",
-  version: "0.3.0",
+  version: "0.3.1",
 });
 
 const text = (t) => ({ content: [{ type: "text", text: t }] });
@@ -75,6 +75,8 @@ server.registerTool(
     if (r.error) return text(r.error);
     const content = await pages.read(version, r.name, r.section);
     const notes = [];
+    const source = await pages.source(version, r.name, r.section);
+    if (source) notes.push(`Package: ${source}`);
     if (r.others.length) notes.push(`Also in: ${r.others.map((s) => ref(r.name, s)).join(", ")}.`);
     const headings = parseHeadings(content);
     let body = content;
@@ -127,7 +129,8 @@ server.registerTool(
         const others = r.others.length ? ` The page is also in ${r.others.map((s) => ref(r.name, s)).join(", ")}.` : "";
         return text(`No definition of "${opt}" in ${ref(r.name, r.section)} on RHEL ${version}. ${hint}${others}`);
       }
-      return text(paginate(formatOptionEntries(r.name, r.section, version, entries), offset, limit,
+      const source = await pages.source(version, r.name, r.section);
+      return text(paginate(formatOptionEntries(r.name, r.section, version, entries, source), offset, limit,
         `"${opt}" in ${ref(r.name, r.section)} — RHEL ${version}`));
     }
 
@@ -138,7 +141,10 @@ server.registerTool(
       const content = await stored.read();
       if (!quick.test(content)) continue;
       const entries = findOptionEntries(content, opt);
-      if (entries.length) found.push(formatOptionEntries(stored.name, stored.section, version, entries));
+      if (entries.length) {
+        const source = await pages.source(version, stored.name, stored.section);
+        found.push(formatOptionEntries(stored.name, stored.section, version, entries, source));
+      }
       if (found.length >= maxPages) break;
     }
     if (!found.length) {
@@ -240,7 +246,9 @@ server.registerTool(
     if (r2.error) return text(`${ref(r1.name, r1.section)} exists on RHEL ${v1} but not on RHEL ${v2} (removed or renamed). ${r2.error}`);
     const a = await pages.read(v1, r1.name, r1.section);
     const b = await pages.read(v2, r2.name, r2.section);
-    const out = formatComparison({ name: r1.name || name, section: r1.section, v1, v2, a, b });
+    const src1 = await pages.source(v1, r1.name, r1.section);
+    const src2 = await pages.source(v2, r2.name, r2.section);
+    const out = formatComparison({ name: r1.name || name, section: r1.section, v1, v2, a, b, src1, src2 });
     return text(paginate(out, offset, limit, `compareVersions ${ref(r1.name, r1.section)} — RHEL ${v1} vs ${v2}`));
   }
 );

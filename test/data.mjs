@@ -29,6 +29,9 @@ try {
 
     const sshd = await call("getManPage", { page: "sshd_config", section: "5", rhelVersion });
     assert.match(sshd, /OpenSSH (SSH )?daemon configuration file/, `RHEL ${rhelVersion}: sshd_config(5)`);
+    if (!process.env.MANPAGES_DIR) {
+      assert.match(sshd, new RegExp(`> Package: openssh-server-\\S+\\.el${rhelVersion}`), `RHEL ${rhelVersion}: sshd_config(5) package`);
+    }
 
     const search = await call("searchManPages", { query: "ldap_uri", rhelVersion, nameFilter: "^sssd", maxPages: 3 });
     assert.match(search, /### sssd[^(]*\(5\): \d+ matching line/, `RHEL ${rhelVersion}: search for ldap_uri`);

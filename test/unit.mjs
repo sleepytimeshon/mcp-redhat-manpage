@@ -191,6 +191,17 @@ test("comparePages ignores rewrapping and reports option changes", () => {
   assert.ok(footer.sameText && !footer.identical);
 });
 
+test("source reports the package when the reader knows it, and null otherwise", async () => {
+  const reader = fakeReader({ 9: { "demo.1": CMD } });
+  assert.equal(await new ManPages(reader).source("9", "demo", "1"), null, "reader without pageSource");
+  reader.pageSource = async (v, name) => (name === "demo" ? { package: "demo-1.0-1.el9.x86_64", license: "MIT" } : null);
+  const withSource = new ManPages(reader);
+  assert.equal(await withSource.source("9", "demo", "1"), "demo-1.0-1.el9.x86_64 (license: MIT)");
+  assert.equal(await withSource.source("9", "other", "1"), null);
+  reader.pageSource = async () => { throw new Error("boom"); };
+  assert.equal(await new ManPages(reader).source("9", "demo", "1"), null, "a failing lookup is not fatal");
+});
+
 test("paginate notes truncation and offsets past the end", () => {
   const out = paginate("abcdef", 0, 4, "label", ["note"]);
   assert.match(out, /^# label\n# chars 0-4 of 6\n> note\n\nabcd/);

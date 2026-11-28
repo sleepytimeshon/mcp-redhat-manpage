@@ -1,6 +1,6 @@
 {
   "name": "mcp-redhat-manpage",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "MCP server providing version-indexed RHEL man pages for configuration verification",
   "type": "module",
   "bin": {
@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
-    "mcp-redhat-manpage-data": "^0.2.1",
+    "mcp-redhat-manpage-data": "^0.2.2",
     "zod": "^4.6.7"
   }
 }
