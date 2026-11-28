@@ -6,20 +6,29 @@ An [MCP](https://modelcontextprotocol.io/) server for RHEL man pages. Lets AI as
 
 | Tool | Description |
 |------|-------------|
-| `getManPage` | Get the content of a man page for a specific RHEL version (paginated) |
-| `searchManPages` | Search across all man pages for a keyword or regex pattern, with context lines |
-| `compareVersions` | Compare a man page between two RHEL versions to detect parameter changes |
-| `listManPages` | List available man pages, optionally filtered by name pattern |
+| `getManPage` | Read a man page for a RHEL version, whole or one heading (e.g. `OPTIONS`); large pages list their headings |
+| `getManPageOption` | Look up one option, directive, or flag (e.g. `ldap_id_mapping`, `PermitRootLogin`) and return its definition and stated default |
+| `searchManPages` | Search man page text (literal, or a regex), grouped by page with context; narrow by page, name pattern, or section |
+| `compareVersions` | Compare a man page between two RHEL versions: options added, removed, or reworded, then the paragraphs that differ |
+| `listManPages` | List man page names for a RHEL version, filtered by name pattern and section |
+
+Pages are named as `sssd.conf`, `sssd.conf(5)`, or with a separate `section`. Without a section, a page's only section is used, or the first of 5, 8, 1, and 7 when it has several (the output names the others). A name not found returns the closest names. `rhelVersion` accepts `9`, `"9"`, `"rhel9"`, or `"9.4"`.
+
+## Output
+
+Output is Markdown written for a language model. `getManPageOption` reads a page's definition lists, so it finds options in config file pages (`sssd.conf(5)`, `sshd_config(5)`, `systemd.service(5)`) and flags in command pages (`ls(1)`), and reports a default only when the description states one. `compareVersions` compares paragraphs with line wrapping ignored, and lists definition-list entries whose description changed.
+
+`searchManPages` and `getManPageOption` without a `page` read every page of the version, which takes about 10 seconds; pass `page`, `nameFilter`, or `section` to narrow them.
 
 ## Pagination
 
-`getManPage` accepts optional `offset` (default 0) and `limit` (default 30000) parameters to chunk large man pages — many RHEL config files (e.g. `sssd.conf(5)`, `nm-settings-dbus(5)`) exceed typical MCP tool-result token caps when returned whole. When a response is truncated, the output ends with a footer like:
+Every tool accepts optional `offset` (default 0) and `limit` (default 30000) parameters, counted in characters of the rendered output, so large results (e.g. `sssd.conf(5)` at about 104,000 characters, or the unfiltered list of about 11,000 names) stay under typical MCP tool-result token caps. When a response is truncated, it ends with a footer like:
 
 ```
 [truncated: showing chars 0-30000 of 102783. Call again with offset=30000 for the next chunk.]
 ```
 
-Pass that `offset` back to fetch the next chunk. Small pages return in one call.
+Pass that `offset` back to fetch the next chunk. Small results return in one call.
 
 ## Prerequisites
 

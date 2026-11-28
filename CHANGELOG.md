@@ -4,6 +4,33 @@ All notable changes to this project are documented in this file. The format is b
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-27
+
+### Added
+- `getManPageOption` tool: look up one option, directive, or flag and return its definition and stated default, from a given page or by scanning every page.
+- `getManPage` `heading` parameter reads one part of a page, such as `OPTIONS` or a subsection; a page larger than one chunk lists its headings.
+- `searchManPages` `regex`, `page`, `nameFilter`, `section`, `maxPages`, and `matchesPerPage` parameters, and `offset`/`limit` pagination.
+- `listManPages` `section` filter and `offset`/`limit` pagination.
+- Offline unit tests (`test/unit.mjs`), run by `npm test`.
+
+### Changed
+- `section` is optional everywhere: a page's only section is used, or the first of 5, 8, 1, and 7 when it has several. Pages may be named as `sssd.conf(5)`, and `rhelVersion` accepts `9`, `"rhel9"`, and `"9.4"`.
+- `searchManPages` matches the query as literal text unless `regex` is true, groups matches by page with a per-page count, and shows at most `matchesPerPage` lines per page, instead of returning the first lines in alphabetical page order.
+- `compareVersions` lists options and entries added, removed, or reworded, then every paragraph that differs with line wrapping ignored, instead of an unordered 30-line sample of changed lines.
+- Logic moved to `src/lib.js`; output is Markdown.
+
+### Fixed
+- A page named without a section no longer fails when it has no section 5 page (`ls` returns `ls(1)`).
+- "Not found" suggestions are ranked and capped at 15 names instead of every name containing the text (152 KB for `e`).
+- `searchManPages` validates its counts and the query (a negative `maxResults` returned "No matches", a large one returned 2.3 MB, and a negative `contextLines` returned empty matches), and explains an invalid regular expression.
+- `listManPages` without a filter returned about 200 KB in one response; it is now paginated, and an invalid filter pattern is matched as literal text.
+- An unknown RHEL version lists the available versions instead of the data directory path.
+- An `offset` past the end of a page says so, and `offset` is described as characters, not bytes.
+- Tools are annotated as not reaching outside the server (`openWorldHint: false`).
+
+### Removed
+- `searchManPages` `maxResults` parameter, replaced by `maxPages` and `matchesPerPage`.
+
 ## [0.2.6] - 2026-11-23
 
 ### Security
@@ -70,7 +97,8 @@ All notable changes to this project are documented in this file. The format is b
 ### Added
 - First release: an MCP server for version-indexed RHEL 8, 9, and 10 man pages with `getManPage`, `searchManPages`, `listManPages`, and `compareVersions`.
 
-[Unreleased]: https://github.com/sleepytimeshon/mcp-redhat-manpage/compare/v0.2.6...HEAD
+[Unreleased]: https://github.com/sleepytimeshon/mcp-redhat-manpage/compare/v0.3.0...HEAD
+[0.3.0]: https://www.npmjs.com/package/mcp-redhat-manpage/v/0.3.0
 [0.2.6]: https://www.npmjs.com/package/mcp-redhat-manpage/v/0.2.6
 [0.2.5]: https://www.npmjs.com/package/mcp-redhat-manpage/v/0.2.5
 [0.2.4]: https://www.npmjs.com/package/mcp-redhat-manpage/v/0.2.4

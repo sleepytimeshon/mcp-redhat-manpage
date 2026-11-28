@@ -1,6 +1,6 @@
 {
   "name": "mcp-redhat-manpage",
-  "version": "0.2.6",
+  "version": "0.3.0",
   "description": "MCP server providing version-indexed RHEL man pages for configuration verification",
   "type": "module",
   "bin": {
@@ -16,7 +16,7 @@
   ],
   "scripts": {
     "start": "node src/index.js",
-    "test": "node test/smoke.mjs && node test/data.mjs"
+    "test": "node test/smoke.mjs && node test/unit.mjs && node test/data.mjs"
   },
   "keywords": [
     "mcp",
